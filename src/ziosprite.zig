@@ -808,3 +808,55 @@ test "example: 3-frame loop cycle" {
     _ = a.update(100);
     try std.testing.expectEqual(@as(u32, 0), a.frameIndex()); // wraps to frame 0
 }
+
+test "Animator variable frame durations per frame" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 50 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 150 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+
+    // Frame 0 lasts 50ns
+    _ = a.update(49);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    _ = a.update(1);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+
+    // Frame 1 lasts 150ns
+    _ = a.update(149);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+    _ = a.update(1);
+    try std.testing.expectEqual(@as(u32, 2), a.frameIndex());
+
+    // Frame 2 lasts 100ns
+    try std.testing.expect(!a.finished);
+    _ = a.update(100);
+    try std.testing.expect(a.finished);
+}
+
+test "Animator ping_pong reverses at end" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .ping_pong,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+
+    // Forward: 0→1
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+    // Backward: 1→0
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    // Forward again: 0→1
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+}
