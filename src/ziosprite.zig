@@ -412,7 +412,7 @@ test "Animator update while paused" {
     var a = Animator.init();
     a.play(&anim);
     a.pause();
-    
+
     _ = a.update(200); // ignored while paused
     try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
     try std.testing.expect(!a.finished);
@@ -448,7 +448,7 @@ test "Animator ping_pong single frame" {
 
     var a = Animator.init();
     a.play(&anim);
-    
+
     // Single frame ping-pong should stay on frame 0
     _ = a.update(100);
     try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
@@ -467,7 +467,7 @@ test "Animator large time jump" {
 
     var a = Animator.init();
     a.play(&anim);
-    
+
     // Jump way past the end
     _ = a.update(10000);
     try std.testing.expect(a.finished);
@@ -485,10 +485,10 @@ test "Animation once with two frames" {
     var a = Animator.init();
     a.play(&anim);
     try std.testing.expect(!a.finished);
-    
+
     _ = a.update(50); // frame 0 → 1
     try std.testing.expect(!a.finished);
-    
+
     _ = a.update(50); // frame 1 → done
     try std.testing.expect(a.finished);
     try std.testing.expect(!a.playing);
@@ -505,7 +505,7 @@ test "Animator frame returns current" {
 
     var a = Animator.init();
     a.play(&anim);
-    
+
     const f = a.frame();
     try std.testing.expect(f != null);
     try std.testing.expectEqual(@as(u32, 0), f.?.x);
@@ -590,7 +590,7 @@ test "Animator progress with loop" {
     a.play(&anim);
     _ = a.update(50); // halfway through first frame
     try std.testing.expect(a.progress() > 0 and a.progress() < 1);
-} 
+}
 
 test "Animator update returns current frame when not playing" {
     const anim = Animation{
