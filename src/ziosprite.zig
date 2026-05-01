@@ -860,3 +860,32 @@ test "Animator ping_pong reverses at end" {
     _ = a.update(100);
     try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
 }
+
+test "attack animation: windup, strike, recovery" {
+    const attack = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 }, // windup
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 50 }, // strike (fast)
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 200 }, // recovery
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&attack);
+
+    // Windup
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    _ = a.update(99);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    _ = a.update(1);
+
+    // Strike (fast frame)
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+    _ = a.update(50);
+
+    // Recovery
+    try std.testing.expectEqual(@as(u32, 2), a.frameIndex());
+    try std.testing.expect(!a.finished);
+    _ = a.update(200);
+    try std.testing.expect(a.finished);
+}
