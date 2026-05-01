@@ -703,3 +703,41 @@ test "Animator switch between animations" {
     _ = a.update(50);
     try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
 }
+
+test "Animator frame index always valid" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 16, .h = 16, .duration_ns = 50 },
+            .{ .x = 16, .y = 0, .w = 16, .h = 16, .duration_ns = 50 },
+            .{ .x = 32, .y = 0, .w = 16, .h = 16, .duration_ns = 50 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+
+    var ns: u64 = 0;
+    while (ns < 1000) : (ns += 37) {
+        _ = a.update(37);
+        try std.testing.expect(a.frameIndex() < 3);
+    }
+}
+
+test "Animator progress is always in [0,1] for loop" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+
+    var ns: u64 = 0;
+    while (ns < 500) : (ns += 33) {
+        _ = a.update(33);
+        try std.testing.expect(a.progress() >= 0);
+        try std.testing.expect(a.progress() <= 1);
+    }
+}
