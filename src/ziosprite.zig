@@ -789,3 +789,22 @@ test "Animation total duration" {
     _ = a.update(1);
     try std.testing.expect(a.finished);
 }
+
+test "example: 3-frame loop cycle" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex()); // frame 1: x=32
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 2), a.frameIndex()); // frame 2: x=64
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex()); // wraps to frame 0
+}

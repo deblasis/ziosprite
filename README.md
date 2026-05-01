@@ -42,6 +42,17 @@ zig build test          # Run 37 tests
 zig build run-example   # Run example
 ```
 
+## Example output
+
+```
+$ zig build run-example
+Frame 0: x=32, y=0
+Frame 1: x=64, y=0
+Frame 2: x=0, y=0
+Frame 3: x=32, y=0
+...
+```
+
 ## API
 
 ### Frame
