@@ -510,3 +510,32 @@ test "Animator frame returns current" {
     try std.testing.expect(f != null);
     try std.testing.expectEqual(@as(u32, 0), f.?.x);
 }
+
+test "Animator unpause after finish does nothing" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100); // finishes
+    try std.testing.expect(a.finished);
+
+    a.unpause(); // can't unpause a finished animation
+    try std.testing.expect(a.finished);
+    try std.testing.expect(!a.playing);
+}
+
+test "Animator loop mode values" {
+    try std.testing.expectEqual(LoopMode.once, .once);
+    try std.testing.expectEqual(LoopMode.loop, .loop);
+    try std.testing.expectEqual(LoopMode.ping_pong, .ping_pong);
+}
+
+test "Frame zero duration" {
+    const f = Frame{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 0 };
+    try std.testing.expectEqual(@as(u64, 0), f.duration_ns);
+}
