@@ -437,3 +437,38 @@ test "Animator progress zero at start" {
     a.play(&anim);
     try std.testing.expectApproxEqAbs(@as(f32, 0), a.progress(), 0.01);
 }
+
+test "Animator ping_pong single frame" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .ping_pong,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    
+    // Single frame ping-pong should stay on frame 0
+    _ = a.update(100);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    try std.testing.expect(!a.finished);
+}
+
+test "Animator large time jump" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    
+    // Jump way past the end
+    _ = a.update(10000);
+    try std.testing.expect(a.finished);
+}
