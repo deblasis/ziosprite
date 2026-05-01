@@ -623,3 +623,34 @@ test "Animator pause preserves frame" {
     a.pause();
     try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
 }
+
+test "Animator play resets finished state" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(200);
+    try std.testing.expect(a.finished);
+    a.play(&anim);
+    try std.testing.expect(!a.finished);
+    try std.testing.expect(a.playing);
+}
+
+test "Animator update with zero duration frame" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 0 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    // Zero-duration frame should advance immediately
+    _ = a.update(0);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+}
