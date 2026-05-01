@@ -302,3 +302,75 @@ test "Frame dimensions" {
     try std.testing.expectEqual(@as(u32, 64), f.x);
     try std.testing.expectEqual(@as(u32, 24), f.h);
 }
+
+test "Animator variable frame durations" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 200 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+
+    // First frame lasts 100ns
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    _ = a.update(100); // advance past frame 0
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+
+    // Second frame lasts 200ns
+    _ = a.update(200); // advance past frame 1
+    try std.testing.expect(a.finished);
+}
+
+test "Animator single frame once" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100);
+    try std.testing.expect(a.finished);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+}
+
+test "Animator single frame loop" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100);
+    try std.testing.expect(!a.finished); // loops forever
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+}
+
+test "Animator stop and replay" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100); // frame 1
+    a.stop();
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+
+    a.play(&anim); // restart
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    try std.testing.expect(!a.finished);
+}
