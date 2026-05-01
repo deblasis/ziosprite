@@ -741,3 +741,32 @@ test "Animator progress is always in [0,1] for loop" {
         try std.testing.expect(a.progress() <= 1);
     }
 }
+
+test "Animator update with zero elapsed time" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    const f = a.update(0);
+    try std.testing.expect(f != null);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+}
+
+test "Animator single frame once animation" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 64, .h = 64, .duration_ns = 200 },
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    try std.testing.expect(!a.finished);
+    _ = a.update(200);
+    try std.testing.expect(a.finished);
+}
