@@ -770,3 +770,22 @@ test "Animator single frame once animation" {
     _ = a.update(200);
     try std.testing.expect(a.finished);
 }
+
+test "Animation total duration" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 200 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 300 },
+        },
+        .loop_mode = .once,
+    };
+    // Total duration should be 600ns
+    var a = Animator.init();
+    a.play(&anim);
+    try std.testing.expect(!a.finished);
+    _ = a.update(599);
+    try std.testing.expect(!a.finished);
+    _ = a.update(1);
+    try std.testing.expect(a.finished);
+}
