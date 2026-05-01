@@ -472,3 +472,41 @@ test "Animator large time jump" {
     _ = a.update(10000);
     try std.testing.expect(a.finished);
 }
+
+test "Animation once with two frames" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 50 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 50 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    try std.testing.expect(!a.finished);
+    
+    _ = a.update(50); // frame 0 → 1
+    try std.testing.expect(!a.finished);
+    
+    _ = a.update(50); // frame 1 → done
+    try std.testing.expect(a.finished);
+    try std.testing.expect(!a.playing);
+}
+
+test "Animator frame returns current" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    
+    const f = a.frame();
+    try std.testing.expect(f != null);
+    try std.testing.expectEqual(@as(u32, 0), f.?.x);
+}
