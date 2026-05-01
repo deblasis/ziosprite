@@ -654,3 +654,52 @@ test "Animator update with zero duration frame" {
     _ = a.update(0);
     try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
 }
+
+test "Animator full walk cycle workflow" {
+    const walk = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 16, .h = 32, .duration_ns = 80 },
+            .{ .x = 16, .y = 0, .w = 16, .h = 32, .duration_ns = 80 },
+            .{ .x = 32, .y = 0, .w = 16, .h = 32, .duration_ns = 80 },
+            .{ .x = 48, .y = 0, .w = 16, .h = 32, .duration_ns = 80 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&walk);
+
+    var frames_seen: u32 = 0;
+    var idx: u32 = 0;
+    while (idx < 8) : (idx += 1) {
+        _ = a.update(80);
+        frames_seen += 1;
+    }
+    try std.testing.expect(frames_seen == 8);
+    try std.testing.expect(!a.finished);
+}
+
+test "Animator switch between animations" {
+    const idle = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 16, .h = 16, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+    const run = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 16, .w = 16, .h = 16, .duration_ns = 50 },
+            .{ .x = 16, .y = 16, .w = 16, .h = 16, .duration_ns = 50 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&idle);
+    _ = a.update(50);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+
+    a.play(&run);
+    try std.testing.expect(!a.finished);
+    _ = a.update(50);
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+}
