@@ -591,3 +591,35 @@ test "Animator progress with loop" {
     _ = a.update(50); // halfway through first frame
     try std.testing.expect(a.progress() > 0 and a.progress() < 1);
 } 
+
+test "Animator update returns current frame when not playing" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100);
+    try std.testing.expect(a.finished);
+    // Update after finish should return last frame
+    const f = a.update(50);
+    try std.testing.expect(f != null);
+    try std.testing.expectEqual(@as(u32, 0), f.?.x);
+}
+
+test "Animator pause preserves frame" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100); // advance to frame 1
+    a.pause();
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+}
