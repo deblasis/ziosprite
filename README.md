@@ -34,7 +34,7 @@ if (frame) |f| {
 // Switch animations
 animator.play(&idle_animation);  // stops current, starts new
 animator.pause();
-animator.resume();
+animator.unpause();
 ```
 
 ```bash
@@ -46,11 +46,12 @@ zig build run-example   # Run example
 
 ```
 $ zig build run-example
-Frame 0: x=32, y=0
-Frame 1: x=64, y=0
-Frame 2: x=0, y=0
-Frame 3: x=32, y=0
-...
+Frame 0: x=32, y=0, w=32, h=32
+Frame 1: x=64, y=0, w=32, h=32
+Frame 2: x=0, y=0, w=32, h=32
+Paused, playing=false
+Resumed, playing=true
+Idle finished: true
 ```
 
 ## API
