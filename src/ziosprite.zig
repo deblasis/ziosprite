@@ -374,3 +374,66 @@ test "Animator stop and replay" {
     try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
     try std.testing.expect(!a.finished);
 }
+
+test "Animator ping_pong three frames" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .ping_pong,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+
+    _ = a.update(100); // 0 → 1
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+    _ = a.update(100); // 1 → 2
+    try std.testing.expectEqual(@as(u32, 2), a.frameIndex());
+    _ = a.update(100); // 2 → 1 (reverse)
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+    _ = a.update(100); // 1 → 0 (reverse)
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    _ = a.update(100); // 0 → 1 (forward again)
+    try std.testing.expectEqual(@as(u32, 1), a.frameIndex());
+}
+
+test "Animator update while paused" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    a.pause();
+    
+    _ = a.update(200); // ignored while paused
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+    try std.testing.expect(!a.finished);
+}
+
+test "Animation loop_mode enum" {
+    try std.testing.expectEqual(LoopMode.once, .once);
+    try std.testing.expectEqual(LoopMode.loop, .loop);
+    try std.testing.expectEqual(LoopMode.ping_pong, .ping_pong);
+}
+
+test "Animator progress zero at start" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    try std.testing.expectApproxEqAbs(@as(f32, 0), a.progress(), 0.01);
+}
