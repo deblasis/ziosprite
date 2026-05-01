@@ -539,3 +539,55 @@ test "Frame zero duration" {
     const f = Frame{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 0 };
     try std.testing.expectEqual(@as(u64, 0), f.duration_ns);
 }
+
+test "Animator loop with rapid updates" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 64, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+
+    // Rapid-fire updates that overshoot multiple frames
+    _ = a.update(500); // jumps through multiple loops
+    try std.testing.expect(!a.finished); // loop never finishes
+}
+
+test "Animator once then replay" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .once,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(100);
+    try std.testing.expect(a.finished);
+
+    // Replay
+    a.play(&anim);
+    try std.testing.expect(!a.finished);
+    try std.testing.expectEqual(@as(u32, 0), a.frameIndex());
+}
+
+test "Animator progress with loop" {
+    const anim = Animation{
+        .frames = &.{
+            .{ .x = 0, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+            .{ .x = 32, .y = 0, .w = 32, .h = 32, .duration_ns = 100 },
+        },
+        .loop_mode = .loop,
+    };
+
+    var a = Animator.init();
+    a.play(&anim);
+    _ = a.update(50); // halfway through first frame
+    try std.testing.expect(a.progress() > 0 and a.progress() < 1);
+} 
